@@ -2,499 +2,877 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111827">
-  <title>Calculadora de impresión 3D | Bambú Lab A1 Mini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2421">
+  <title>Cotizador 3D | Bambu Lab A1 Mini</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f3f5f9;
-      --panel: #ffffff;
-      --text: #172033;
-      --muted: #647084;
-      --line: #e1e6ef;
-      --accent: #2563eb;
-      --accent-dark: #1d4ed8;
-      --good: #087f5b;
+      --bg: #f4f1ea;
+      --card: #ffffff;
+      --ink: #1f2421;
+      --muted: #6b7068;
+      --line: #e5e0d4;
+      --accent: #d9480f;
+      --accent-dark: #b73a09;
+      --accent-soft: #fdeee6;
+      --dark: #1f2421;
+      --dark-2: #2d342f;
+      --good: #8be0b3;
+      --green: #1e7a4c;
+      --green-soft: #e3f5ec;
+      --yellow: #9a6700;
+      --yellow-soft: #fdf3d6;
+      --red: #b42318;
+      --red-soft: #fdeceb;
       --danger: #b42318;
-      --soft: #edf3ff;
-      --shadow: 0 12px 35px rgba(23, 32, 51, .08);
+      --radius: 16px;
+      --gutter: clamp(14px, 3vw, 28px);
     }
     * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.5;
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.45; padding-bottom: env(safe-area-inset-bottom);
     }
-    header {
-      background: linear-gradient(135deg, #111827, #263c66);
-      color: white;
-      padding: 30px 18px 28px;
+    .wrap { width: min(1180px, 100%); margin: 0 auto; padding: 0 var(--gutter); }
+
+    .topbar { background: var(--dark); color: #fff; }
+    .topbar .wrap { padding-top: 16px; padding-bottom: 0; }
+    .brand { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; }
+    .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; background: var(--accent); display: grid; place-items: center; font-weight: 900; font-size: 1.05rem; letter-spacing: -.03em; }
+    .topbar h1 { margin: 0; font-size: clamp(1.1rem, 3.5vw, 1.45rem); line-height: 1.1; letter-spacing: -.02em; }
+    .topbar p { margin: 2px 0 0; color: #b9c0b8; font-size: .82rem; }
+    .tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: none; background: transparent; color: #b9c0b8; border-radius: 10px 10px 0 0; padding: 11px 18px;
+      font-weight: 700; min-height: 44px;
     }
-    .header-inner, main { max-width: 1120px; margin: 0 auto; }
-    .eyebrow { margin: 0 0 7px; color: #c8d7ff; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { margin: 0; font-size: clamp(1.65rem, 4vw, 2.45rem); line-height: 1.12; }
-    .subtitle { margin: 10px 0 0; color: #e0e7f5; max-width: 720px; }
-    main { padding: 22px 16px 44px; }
-    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .88fr); gap: 18px; align-items: start; }
-    .panel {
-      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
-      padding: 20px; box-shadow: var(--shadow); min-width: 0;
-    }
-    h2 { font-size: 1.15rem; margin: 0 0 16px; }
-    h3 { font-size: 1rem; margin: 0 0 10px; }
-    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field.full { grid-column: 1 / -1; }
-    label { font-weight: 700; font-size: .88rem; }
+    .tab:hover { color: #fff; }
+    .tab.active { background: var(--bg); color: var(--ink); }
+
+    main { padding-top: clamp(16px, 3vw, 28px); padding-bottom: 120px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: clamp(14px, 2.5vw, 24px); align-items: start; }
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px, 3vw, 24px); min-width: 0; }
+    .card + .card { margin-top: clamp(14px, 2.5vw, 24px); }
+    .card-title { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 1.02rem; }
+    .step { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); display: grid; place-items: center; font-size: .8rem; font-weight: 800; flex: none; }
+
+    .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .field.wide { grid-column: 1 / -1; }
+    label { font-size: .8rem; font-weight: 700; color: #3b413c; }
+    .hint { margin: 0; font-size: .74rem; color: var(--muted); }
     input, select, textarea {
-      width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cfd6e2;
-      border-radius: 10px; background: #fff; color: var(--text); font: inherit;
+      width: 100%; min-width: 0; padding: 11px 12px; font: inherit; font-size: 1rem; color: var(--ink);
+      background: #fcfbf8; border: 1.5px solid var(--line); border-radius: 10px;
     }
-    input:focus, select:focus, textarea:focus { outline: 3px solid #bfdbfe; border-color: var(--accent); }
-    .hint { color: var(--muted); font-size: .78rem; margin: 0; }
-    .section-label { grid-column: 1 / -1; margin: 7px 0 -3px; padding-top: 10px; border-top: 1px solid var(--line); color: #3d4b63; font-size: .76rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
-    .buttons { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
-    button {
-      appearance: none; border: 0; border-radius: 10px; padding: 11px 15px;
-      font: inherit; font-weight: 800; cursor: pointer; transition: transform .06s ease, background .15s ease;
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,72,15,.15); background: #fff; }
+
+    .tip { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: .82rem; color: #5a2a14; margin: 0 0 12px; }
+    .fil-list { display: grid; gap: 10px; }
+    .fil {
+      display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+      gap: 10px; align-items: end; padding: 12px; border: 1.5px solid var(--line); border-radius: 12px; background: #fcfbf8;
     }
+    .fil .sub { font-variant-numeric: tabular-nums; font-weight: 800; padding-bottom: 11px; white-space: nowrap; text-align: right; min-width: 78px; }
+    .fil .sub small { display: block; font-weight: 600; color: var(--muted); font-size: .68rem; }
+    .fil input[type="color"] { padding: 3px; height: 44px; width: 48px; cursor: pointer; flex: none; }
+    .fil .del { align-self: end; }
+    .fil-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 12px; }
+    .fil-total { font-size: .88rem; color: var(--muted); }
+    .fil-total strong { color: var(--ink); }
+
+    button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; min-height: 44px; }
     button:active { transform: translateY(1px); }
-    .primary { background: var(--accent); color: white; }
-    .primary:hover { background: var(--accent-dark); }
-    .secondary { background: #e9edf5; color: #26344b; }
-    .secondary:hover { background: #dfe5ef; }
-    .danger { background: #fff0ef; color: var(--danger); }
-    .small { padding: 7px 10px; font-size: .8rem; }
-    .result-hero { padding: 18px; background: var(--soft); border: 1px solid #d6e4ff; border-radius: 14px; margin-bottom: 14px; }
-    .result-hero .label { color: #435675; font-size: .82rem; font-weight: 800; }
-    .price { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; color: var(--good); font-weight: 900; margin: 5px 0; letter-spacing: -.04em; }
-    .result-hero p { margin: 0; color: #50617c; font-size: .82rem; }
-    .breakdown { display: grid; gap: 0; }
-    .breakdown-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-    .breakdown-row:last-child { border-bottom: 0; }
-    .breakdown-row span:first-child { color: var(--muted); }
-    .breakdown-row strong { text-align: right; font-variant-numeric: tabular-nums; }
-    .notice { margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
-    .history-panel { margin-top: 18px; }
-    .history-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-    .history-head h2 { margin: 0; }
-    .history-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-    .table-wrap { overflow-x: auto; }
-    table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .86rem; }
-    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    th { background: #f8faff; color: #526078; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
-    td.numeric { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .empty { padding: 28px 10px; text-align: center; color: var(--muted); }
-    .tag { display: inline-block; padding: 3px 7px; border-radius: 999px; background: #eef2f7; color: #45546a; font-size: .72rem; font-weight: 800; }
-    .status { min-height: 1.3em; margin: 10px 0 0; font-size: .85rem; color: var(--good); }
-    footer { max-width: 1120px; margin: 0 auto; padding: 0 16px 28px; color: var(--muted); font-size: .8rem; }
-    @media (max-width: 800px) {
-      .layout { grid-template-columns: 1fr; }
-      .panel { padding: 16px; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-ghost { background: #eee9de; color: var(--ink); }
+    .btn-ghost:hover { background: #e5dfd0; }
+    .btn-add { background: var(--accent-soft); color: var(--accent-dark); }
+    .btn-add:hover { background: #fbe0d1; }
+    .btn-sale { background: var(--green-soft); color: var(--green); }
+    .btn-sale:hover { background: #d3eee0; }
+    .btn-danger { background: var(--red-soft); color: var(--danger); }
+    .btn-sm { padding: 7px 11px; min-height: 36px; font-size: .82rem; }
+    .btn-icon { width: 44px; padding: 0; font-size: 1.2rem; line-height: 1; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .status { min-height: 1.3em; margin: 10px 0 0; font-size: .85rem; color: var(--green); font-weight: 600; }
+
+    .summary { position: sticky; top: 14px; }
+    .sum-card { background: var(--dark); color: #fff; border-radius: var(--radius); padding: clamp(18px, 3vw, 24px); }
+    .sum-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; color: #aab3a9; font-weight: 700; }
+    .sum-price { font-size: clamp(2.3rem, 7vw, 3.3rem); font-weight: 900; letter-spacing: -.04em; line-height: 1.05; color: var(--good); margin: 6px 0 4px; font-variant-numeric: tabular-nums; word-break: break-word; }
+    .sum-unit { margin: 0 0 16px; color: #c9d0c8; font-size: .9rem; }
+    .rows { display: grid; }
+    .row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-top: 1px solid var(--dark-2); font-size: .9rem; }
+    .row span { color: #aab3a9; }
+    .row strong { font-variant-numeric: tabular-nums; text-align: right; }
+    .group { margin-top: 12px; padding-bottom: 4px; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--good); }
+    .group:first-child { margin-top: 0; }
+    .row.total-cost { border-top: 2px solid #46504a; margin-top: 4px; }
+    .row.total-cost span, .row.total-cost strong { color: #fff; }
+    .row.profit strong { color: var(--good); }
+    .disclaimer { margin: 12px 4px 0; font-size: .76rem; color: var(--muted); }
+
+    .mobile-bar {
+      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+      background: var(--dark); color: #fff; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+      align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 -8px 24px rgba(0,0,0,.18);
     }
-    @media (max-width: 480px) {
-      .field-grid { grid-template-columns: 1fr; }
-      .field.full, .section-label { grid-column: auto; }
-      header { padding-top: 24px; }
+    .mobile-bar .mb-label { font-size: .7rem; color: #aab3a9; text-transform: uppercase; letter-spacing: .08em; }
+    .mobile-bar .mb-price { font-size: 1.45rem; font-weight: 900; color: var(--good); font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .mobile-bar button { background: var(--accent); color: #fff; }
+
+    .hist-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .hist-head h2 { margin: 0; font-size: 1.1rem; }
+    .hist-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+    .filters { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filters button { background: #eee9de; color: var(--ink); padding: 7px 14px; min-height: 36px; font-size: .84rem; }
+    .filters button.on { background: var(--dark); color: #fff; }
+    .hist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+    .q { border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; background: #fcfbf8; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .q.sold { border-color: #b9e2cc; background: #f6fcf9; }
+    .q-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .q-name { font-weight: 800; overflow-wrap: anywhere; }
+    .q-client { font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
+    .q-total { font-weight: 900; font-size: 1.15rem; color: var(--accent-dark); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+    .q-total small { display: block; font-size: .66rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #eee9de; color: #4a504a; display: inline-flex; align-items: center; gap: 5px; }
+    .chip.ok { background: var(--green-soft); color: var(--green); }
+    .chip.pending { background: var(--yellow-soft); color: var(--yellow); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.2); display: inline-block; }
+    .q-meta { font-size: .78rem; color: var(--muted); }
+    .q-profit { font-size: .84rem; font-weight: 700; }
+    .q-profit.pos { color: var(--green); } .q-profit.neg { color: var(--red); }
+    .q-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
+    .empty { text-align: center; padding: 30px 10px; color: var(--muted); }
+
+    .verdict { border-radius: var(--radius); padding: clamp(16px, 3vw, 24px); display: flex; gap: 16px; align-items: center; margin-bottom: clamp(14px, 2.5vw, 24px); border: 1.5px solid; }
+    .verdict .light { width: 54px; height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 1.5rem; color: #fff; font-weight: 900; }
+    .verdict h2 { margin: 0 0 3px; font-size: clamp(1.1rem, 3vw, 1.4rem); }
+    .verdict p { margin: 0; font-size: .9rem; }
+    .verdict.green { background: var(--green-soft); border-color: #a9dcc0; color: #0f4d2f; } .verdict.green .light { background: var(--green); }
+    .verdict.yellow { background: var(--yellow-soft); border-color: #ecd48a; color: #5c3f00; } .verdict.yellow .light { background: #d99a00; }
+    .verdict.red { background: var(--red-soft); border-color: #f0b5b0; color: #6e1710; } .verdict.red .light { background: var(--red); }
+    .verdict.gray { background: #eee9de; border-color: var(--line); color: #4a504a; } .verdict.gray .light { background: #8a8f86; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: clamp(14px, 2.5vw, 24px); }
+    .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+    .kpi .k-label { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .kpi .k-val { font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin: 4px 0 2px; word-break: break-word; }
+    .kpi .k-sub { font-size: .76rem; color: var(--muted); }
+    .kpi.pos .k-val { color: var(--green); } .kpi.neg .k-val { color: var(--red); }
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(14px, 2.5vw, 24px); align-items: start; }
+    .two > .card + .card { margin-top: 0; }
+    .progress { height: 16px; background: #eee9de; border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+    .progress > div { height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+    .progress.done > div { background: var(--green); }
+    .bars { display: grid; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; align-items: center; font-size: .82rem; }
+    .bar-row .track { height: 14px; background: #eee9de; border-radius: 999px; overflow: hidden; }
+    .bar-row .track > div { height: 100%; background: var(--accent); border-radius: 999px; }
+    .bar-row strong { font-variant-numeric: tabular-nums; }
+    .exp-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; align-items: end; margin-bottom: 14px; }
+    .exp-list { display: grid; gap: 8px; }
+    .exp { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: #fcfbf8; }
+    .exp .e-name { font-weight: 700; overflow-wrap: anywhere; }
+    .exp .e-meta { font-size: .74rem; color: var(--muted); }
+    .exp .e-cost { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .exp .e-right { display: flex; align-items: center; gap: 8px; }
+
+    footer { color: var(--muted); font-size: .78rem; padding-bottom: 30px; }
+
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { position: static; }
+      body[data-tab="quote"] .mobile-bar { display: flex; }
+    }
+    @media (max-width: 640px) {
+      .fil { grid-template-columns: 1fr 1fr 1fr; }
+      .fil .f-name { grid-column: 1 / -1; }
+      .fil .sub { grid-column: 1 / 3; text-align: left; padding-bottom: 0; align-self: center; }
+      .fil .del { grid-column: 3; justify-self: end; }
+      .verdict { align-items: flex-start; }
+    }
+    @media (max-width: 420px) {
+      .fields { grid-template-columns: 1fr; }
+      .hist-grid { grid-template-columns: 1fr; }
+      .actions button { flex: 1 1 100%; }
+      .bar-row { grid-template-columns: 56px 1fr auto; }
     }
     @media print {
-      body { background: white; }
-      header { background: white; color: black; padding: 10px 0; }
-      .subtitle, .eyebrow { color: #444; }
-      main { padding: 10px 0; }
-      .layout { grid-template-columns: 1fr 1fr; }
-      .panel { box-shadow: none; break-inside: avoid; }
-      .buttons, .history-actions, .action-cell, footer { display: none !important; }
-      .history-panel { box-shadow: none; }
+      body { background: #fff; }
+      .topbar, .mobile-bar, .actions, .hist-tools, .q-actions, footer, .fil .del, .btn-add, .filters, .exp-form, .exp .btn-danger { display: none !important; }
+      .view { display: block !important; }
+      .grid { grid-template-columns: 1fr 1fr; }
+      .card, .sum-card, .kpi { break-inside: avoid; }
+      .sum-card { background: #fff; color: #000; border: 1px solid #000; }
+      .sum-price { color: #000; } .sum-label, .row span, .sum-unit { color: #333; } .row { border-color: #bbb; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="header-inner">
-      <p class="eyebrow">Herramienta para tu emprendimiento</p>
-      <h1>Calculadora de impresión 3D</h1>
-      <p class="subtitle">Cotiza piezas con tu Bambu Lab A1 Mini, calcula tus costos y guarda un historial de cotizaciones en este navegador.</p>
-    </div>
-  </header>
-
-  <main>
-    <div class="layout">
-      <section class="panel" aria-labelledby="form-title">
-        <h2 id="form-title">Datos de la cotización</h2>
-        <form id="quote-form">
-          <div class="field-grid">
-            <div class="field full">
-              <label for="client">Cliente (opcional)</label>
-              <input id="client" maxlength="100" placeholder="Nombre del cliente">
-            </div>
-            <div class="field full">
-              <label for="piece">Nombre de la pieza / pedido *</label>
-              <input id="piece" maxlength="140" placeholder="Ej. Soporte para celular" required>
-            </div>
-            <div class="field">
-              <label for="category">Categoría</label>
-              <select id="category">
-                <option>Figuras y decoración</option>
-                <option>Llaveros</option>
-                <option>Piezas funcionales / repuestos</option>
-                <option>Soportes para celular</option>
-                <option>Accesorios gamer</option>
-                <option>Organizadores</option>
-                <option>Piezas personalizadas</option>
-                <option>Archivo del cliente (STL/3MF)</option>
-                <option>Diseño 3D desde cero</option>
-                <option>Otro</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="quantity">Cantidad de piezas</label>
-              <input id="quantity" type="number" min="1" step="1" value="1" required>
-            </div>
-
-            <div class="section-label">Material e impresión</div>
-            <div class="field">
-              <label for="grams">Filamento por pieza (g)</label>
-              <input id="grams" type="number" min="0" step="0.1" value="100" required>
-            </div>
-            <div class="field">
-              <label for="kgCost">Costo del filamento por kg ($)</label>
-              <input id="kgCost" type="number" min="0" step="1" value="250" required>
-            </div>
-            <div class="field">
-              <label for="hours">Horas por pieza</label>
-              <input id="hours" type="number" min="0" step="0.1" value="3" required>
-            </div>
-            <div class="field">
-              <label for="rate">Tarifa de impresora por hora ($)</label>
-              <input id="rate" type="number" min="0" step="0.5" value="10" required>
-            </div>
-
-            <div class="section-label">Otros costos y ganancia</div>
-            <div class="field">
-              <label for="electricity">Electricidad por pedido ($)</label>
-              <input id="electricity" type="number" min="0" step="0.5" value="3" required>
-            </div>
-            <div class="field">
-              <label for="labor">Mano de obra / preparación ($)</label>
-              <input id="labor" type="number" min="0" step="1" value="10" required>
-            </div>
-            <div class="field">
-              <label for="design">Diseño / modelado ($)</label>
-              <input id="design" type="number" min="0" step="1" value="0" required>
-            </div>
-            <div class="field">
-              <label for="extras">Otros costos por pedido ($)</label>
-              <input id="extras" type="number" min="0" step="1" value="5" required>
-            </div>
-            <div class="field">
-              <label for="failure">Reserva para fallas (%)</label>
-              <input id="failure" type="number" min="0" max="100" step="1" value="5" required>
-              <p class="hint">Reserva para reimpresiones y desperdicio.</p>
-            </div>
-            <div class="field">
-              <label for="margin">Recargo sobre el costo (%)</label>
-              <input id="margin" type="number" min="0" max="500" step="1" value="25" required>
-            </div>
-            <div class="field full">
-              <label for="notes">Notas (opcional)</label>
-              <textarea id="notes" rows="2" maxlength="500" placeholder="Color, medidas, entrega, cambios acordados…"></textarea>
-            </div>
-          </div>
-          <div class="buttons">
-            <button class="primary" type="submit">Guardar en historial</button>
-            <button class="secondary" type="button" id="reset-btn">Restablecer formulario</button>
-          </div>
-          <p id="form-status" class="status" role="status" aria-live="polite"></p>
-        </form>
-      </section>
-
-      <aside class="panel" aria-labelledby="result-title">
-        <h2 id="result-title">Resumen de precio</h2>
-        <div class="result-hero">
-          <div class="label">Precio sugerido del pedido completo</div>
-          <div class="price" id="total-price">$0.00</div>
-          <p id="unit-price">Precio por pieza: $0.00</p>
-        </div>
-        <div class="breakdown" aria-live="polite">
-          <div class="breakdown-row"><span>Material total</span><strong id="out-material">$0.00</strong></div>
-          <div class="breakdown-row"><span>Uso de impresora</span><strong id="out-machine">$0.00</strong></div>
-          <div class="breakdown-row"><span>Electricidad</span><strong id="out-electricity">$0.00</strong></div>
-          <div class="breakdown-row"><span>Mano de obra</span><strong id="out-labor">$0.00</strong></div>
-          <div class="breakdown-row"><span>Diseño / modelado</span><strong id="out-design">$0.00</strong></div>
-          <div class="breakdown-row"><span>Otros costos</span><strong id="out-extras">$0.00</strong></div>
-          <div class="breakdown-row"><span>Reserva por fallas</span><strong id="out-failure">$0.00</strong></div>
-          <div class="breakdown-row"><span>Costo estimado</span><strong id="out-cost">$0.00</strong></div>
-          <div class="breakdown-row"><span>Recargo</span><strong id="out-profit">$0.00</strong></div>
-        </div>
-        <p class="notice">Estimación: revisa el precio final según la complejidad, el acabado, la demanda y los precios de tu zona. La tarifa por hora debe cubrir desgaste y mantenimiento; la electricidad se suma por separado.</p>
-      </aside>
-    </div>
-
-    <section class="panel history-panel" aria-labelledby="history-title">
-      <div class="history-head">
+<body data-tab="quote">
+  <div class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo">3D</div>
         <div>
-          <h2 id="history-title">Historial de cotizaciones</h2>
-          <p class="hint">Se guarda en el almacenamiento local de este navegador; no requiere base de datos ni conexión a internet.</p>
-        </div>
-        <div class="history-actions">
-          <button class="secondary small" id="export-btn" type="button">Exportar CSV</button>
-          <button class="secondary small" id="backup-btn" type="button">Descargar respaldo JSON</button>
-          <button class="secondary small" id="import-btn" type="button">Importar respaldo</button>
-          <button class="secondary small" id="print-btn" type="button">Imprimir</button>
-          <button class="danger small" id="clear-btn" type="button">Borrar historial</button>
-          <input id="import-file" type="file" accept=".json,application/json" hidden>
+          <h1>Cotizador de impresión 3D</h1>
+          <p>Bambu Lab A1 Mini · precios en MXN</p>
         </div>
       </div>
-      <div id="history-container">
-        <div class="empty">Todavía no has guardado cotizaciones. Completa el formulario y pulsa “Guardar en historial”.</div>
+      <nav class="tabs" role="tablist" aria-label="Secciones">
+        <button class="tab active" role="tab" data-tab="quote" type="button">Cotizador</button>
+        <button class="tab" role="tab" data-tab="history" type="button">Pedidos y ventas</button>
+        <button class="tab" role="tab" data-tab="dash" type="button">Dashboard</button>
+      </nav>
+    </div>
+  </div>
+
+  <main class="wrap">
+
+    <div class="view active" id="view-quote">
+      <div class="grid">
+        <form id="quote-form" novalidate>
+          <section class="card">
+            <h2 class="card-title"><span class="step">1</span> Pedido</h2>
+            <div class="fields">
+              <div class="field wide">
+                <label for="piece">Pieza o pedido *</label>
+                <input id="piece" maxlength="140" placeholder="Ej. Soporte para celular" required>
+              </div>
+              <div class="field">
+                <label for="client">Cliente (opcional)</label>
+                <input id="client" maxlength="100" placeholder="Nombre del cliente">
+              </div>
+              <div class="field">
+                <label for="category">Categoría</label>
+                <select id="category">
+                  <option>Figuras y decoración</option>
+                  <option>Llaveros</option>
+                  <option>Piezas funcionales / repuestos</option>
+                  <option>Soportes para celular</option>
+                  <option>Accesorios gamer</option>
+                  <option>Organizadores</option>
+                  <option>Piezas personalizadas</option>
+                  <option>Archivo del cliente (STL/3MF)</option>
+                  <option>Diseño 3D desde cero</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="quantity">Cantidad de piezas</label>
+                <input id="quantity" type="number" inputmode="numeric" min="1" step="1" value="1">
+              </div>
+              <div class="field">
+                <label for="hours">Horas de impresión por pieza</label>
+                <input id="hours" type="number" inputmode="decimal" min="0" step="0.1" value="3">
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title"><span class="step">2</span> Filamentos</h2>
+            <p class="tip">Costo por kg = lo que pagaste ÷ kilos del carrete (carrete de 500 g por $300 → <strong>600</strong>).</p>
+            <div class="fil-list" id="fil-list"></div>
+            <div class="fil-foot">
+              <button type="button" class="btn-add" id="add-fil">+ Agregar filamento</button>
+              <div class="fil-total" id="fil-total"></div>
+            </div>
+            <div class="fields" style="margin-top:14px">
+              <div class="field">
+                <label for="purge">Purga por cambio de color (g/pieza)</label>
+                <input id="purge" type="number" inputmode="decimal" min="0" step="0.1" value="0">
+                
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title"><span class="step">3</span> Costos y ganancia</h2>
+            <div class="fields">
+              <div class="field">
+                <label for="rate">Tarifa de impresora por hora ($)</label>
+                <input id="rate" type="number" inputmode="decimal" min="0" step="0.5" value="10">
+                
+              </div>
+              <div class="field">
+                <label for="electricity">Electricidad por pedido ($)</label>
+                <input id="electricity" type="number" inputmode="decimal" min="0" step="0.5" value="3">
+              </div>
+              <div class="field">
+                <label for="labor">Mano de obra / preparación ($)</label>
+                <input id="labor" type="number" inputmode="decimal" min="0" step="1" value="10">
+              </div>
+              <div class="field">
+                <label for="design">Diseño / modelado ($)</label>
+                <input id="design" type="number" inputmode="decimal" min="0" step="1" value="0">
+              </div>
+              <div class="field">
+                <label for="extras">Otros costos por pedido ($)</label>
+                <input id="extras" type="number" inputmode="decimal" min="0" step="1" value="5">
+                
+              </div>
+              <div class="field">
+                <label for="failure">Reserva para fallas (%)</label>
+                <input id="failure" type="number" inputmode="decimal" min="0" max="100" step="1" value="5">
+              </div>
+              <div class="field">
+                <label for="matMargin">Ganancia sobre el material (%)</label>
+                <input id="matMargin" type="number" inputmode="decimal" min="0" max="500" step="1" value="35">
+                
+              </div>
+              <div class="field">
+                <label for="margin">Recargo sobre el resto (%)</label>
+                <input id="margin" type="number" inputmode="decimal" min="0" max="500" step="1" value="25">
+                
+              </div>
+              <div class="field wide">
+                <label for="notes">Notas (opcional)</label>
+                <textarea id="notes" rows="2" maxlength="500" placeholder="Medidas, acabado, entrega, cambios acordados…"></textarea>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-primary" type="submit">Guardar cotización</button>
+              <button class="btn-ghost" type="button" id="reset-btn">Restablecer</button>
+            </div>
+            <p id="form-status" class="status" role="status" aria-live="polite"></p>
+          </section>
+        </form>
+
+        <aside class="summary" id="summary" aria-label="Resumen de precio">
+          <div class="sum-card">
+            <div class="sum-label">Precio sugerido del pedido</div>
+            <div class="sum-price" id="total-price">$0.00</div>
+            <p class="sum-unit" id="unit-price">Por pieza: $0.00</p>
+            <div class="rows" aria-live="polite">
+              <div class="group">Lo que te cuesta</div>
+              <div class="row"><span>Material</span><strong id="out-material">$0.00</strong></div>
+              <div class="row"><span>Uso de impresora</span><strong id="out-machine">$0.00</strong></div>
+              <div class="row"><span>Electricidad</span><strong id="out-electricity">$0.00</strong></div>
+              <div class="row"><span>Mano de obra</span><strong id="out-labor">$0.00</strong></div>
+              <div class="row"><span>Diseño / modelado</span><strong id="out-design">$0.00</strong></div>
+              <div class="row"><span>Otros costos</span><strong id="out-extras">$0.00</strong></div>
+              <div class="row"><span>Reserva por fallas</span><strong id="out-failure">$0.00</strong></div>
+              <div class="row total-cost"><span>Costo total</span><strong id="out-cost">$0.00</strong></div>
+              <div class="group">Lo que ganas</div>
+              <div class="row profit"><span id="lbl-matprofit">Sobre el material</span><strong id="out-matprofit">$0.00</strong></div>
+              <div class="row profit"><span id="lbl-profit">Sobre el resto</span><strong id="out-profit">$0.00</strong></div>
+              <div class="row total-cost profit"><span>Ganancia total</span><strong id="out-gain">$0.00</strong></div>
+            </div>
+          </div>
+        </aside>
       </div>
-      <p id="history-status" class="status" role="status" aria-live="polite"></p>
-    </section>
+    </div>
+
+    <div class="view" id="view-history">
+      <section class="card" aria-labelledby="history-title">
+        <div class="hist-head">
+          <div>
+            <h2 id="history-title">Pedidos y ventas</h2>
+            <p class="hint">Marca como vendida cada pedido que cobres.</p>
+          </div>
+          <div class="hist-tools">
+            <button class="btn-ghost btn-sm" id="export-btn" type="button">Exportar CSV</button>
+            <button class="btn-ghost btn-sm" id="backup-btn" type="button">Respaldo JSON</button>
+            <button class="btn-ghost btn-sm" id="import-btn" type="button">Importar</button>
+            <button class="btn-ghost btn-sm" id="print-btn" type="button">Imprimir</button>
+            <button class="btn-danger btn-sm" id="clear-btn" type="button">Borrar pedidos</button>
+            <input id="import-file" type="file" accept=".json,application/json" hidden>
+          </div>
+        </div>
+        <div class="filters" id="filters">
+          <button type="button" class="on" data-filter="all">Todos</button>
+          <button type="button" data-filter="pending">Por cobrar</button>
+          <button type="button" data-filter="sold">Vendidos</button>
+        </div>
+        <div id="history-container"></div>
+        <p id="history-status" class="status" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+
+    <div class="view" id="view-dash">
+      <div class="verdict gray" id="verdict">
+        <div class="light" id="v-light">–</div>
+        <div><h2 id="v-title">Sin datos todavía</h2><p id="v-text">Registra tus compras y marca tus primeras ventas para ver cómo vas.</p></div>
+      </div>
+
+      <div class="kpis" id="kpis"></div>
+
+      <div class="two">
+        <section class="card">
+          <h2 class="card-title">¿Ya recuperaste lo que invertiste?</h2>
+          <div class="progress" id="payback-bar"><div style="width:0%"></div></div>
+          <p class="hint" id="payback-text"></p>
+          <h2 class="card-title" style="margin-top:22px">Ventas por mes</h2>
+          <div class="bars" id="month-bars"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Inventario de filamento</h2>
+          <div class="rows" id="inv-rows"></div>
+          <p class="hint" style="margin-top:10px">Disponible = comprado − usado en pedidos vendidos (estimado).</p>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top: clamp(14px, 2.5vw, 24px)">
+        <h2 class="card-title">Compras e inversión</h2>
+        
+        <form class="exp-form" id="exp-form" novalidate>
+          <div class="field"><label for="e-name">Concepto</label><input id="e-name" maxlength="80" placeholder="Ej. PLA negro 1 kg"></div>
+          <div class="field"><label for="e-cat">Tipo</label>
+            <select id="e-cat"><option>Filamento</option><option>Equipo</option><option>Refacciones</option><option>Empaque y envío</option><option>Otro</option></select></div>
+          <div class="field"><label for="e-cost">Costo total ($)</label><input id="e-cost" type="number" inputmode="decimal" min="0" step="1" placeholder="300"></div>
+          <div class="field"><label for="e-grams">Gramos (filamento)</label><input id="e-grams" type="number" inputmode="decimal" min="0" step="1" placeholder="1000"></div>
+          <div class="field"><label for="e-date">Fecha</label><input id="e-date" type="date"></div>
+          <button class="btn-primary" type="submit">Agregar</button>
+        </form>
+        <p id="exp-status" class="status" role="status" aria-live="polite"></p>
+        <div class="exp-list" id="exp-list"></div>
+      </section>
+    </div>
+
+    <footer>
+      <p><strong>Tus datos se guardan solo en este navegador.</strong> Descarga un respaldo JSON de vez en cuando.</p>
+    </footer>
   </main>
 
-  <footer>
-    <p><strong>Importante sobre el historial:</strong> como esta versión no usa servidor ni base de datos, los datos se guardan en el navegador y dispositivo donde abras esta página. No se sincronizan automáticamente entre dispositivos ni con otros usuarios. Exporta un respaldo JSON periódicamente para no perder tus registros si borras los datos del navegador.</p>
-  </footer>
+  <div class="mobile-bar">
+    <div>
+      <div class="mb-label">Precio sugerido</div>
+      <div class="mb-price" id="mb-price">$0.00</div>
+    </div>
+    <button type="button" id="mb-details">Ver desglose</button>
+  </div>
 
   <script>
     (() => {
       "use strict";
       const STORAGE_KEY = "impresion3d_quote_history_v1";
+      const EXP_KEY = "impresion3d_expenses_v1";
       const $ = (id) => document.getElementById(id);
       const form = $("quote-form");
-      const currency = (value) => new Intl.NumberFormat("es-MX", {
-        style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2
-      }).format(Number.isFinite(value) ? value : 0);
+      const filList = $("fil-list");
+      const fmt = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+      const money = (v) => fmt.format(Number.isFinite(v) ? v : 0);
       const num = (id) => Math.max(0, Number($(id).value) || 0);
-      let history = loadHistory();
+      const nn = (v) => Math.max(0, Number(v) || 0);
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+      const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const PALETTE = ["#1f2421", "#d9480f", "#2f6fdb", "#2f9e5b", "#e0a800", "#8a4fd0"];
+      const FIELD_IDS = ["client","piece","category","quantity","hours","purge","rate","electricity","labor","design","extras","failure","matMargin","margin","notes"];
+      let history = loadList(STORAGE_KEY);
+      let expenses = loadList(EXP_KEY);
+      let filter = "all";
 
-      function loadHistory() {
+      function loadList(key) {
         try {
-          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-          return Array.isArray(data) ? data.filter(item => item && typeof item === "object") : [];
-        } catch (error) {
-          return [];
-        }
+          const d = JSON.parse(localStorage.getItem(key) || "[]");
+          return Array.isArray(d) ? d.filter(x => x && typeof x === "object") : [];
+        } catch (e) { return []; }
       }
-      function saveHistory() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-          return true;
-        } catch (error) {
-          $("history-status").textContent = "No se pudo guardar. Exporta un respaldo y revisa el almacenamiento disponible del navegador.";
-          return false;
-        }
+      function saveList(key, list, statusId) {
+        try { localStorage.setItem(key, JSON.stringify(list)); return true; }
+        catch (e) { $(statusId).textContent = "No se pudo guardar. Descarga un respaldo y revisa el espacio del navegador."; return false; }
       }
-      function values() {
+      const saveHistory = () => saveList(STORAGE_KEY, history, "history-status");
+      const saveExpenses = () => saveList(EXP_KEY, expenses, "exp-status");
+
+      function showTab(name) {
+        document.body.dataset.tab = name;
+        document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+        document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+        if (name === "dash") renderDashboard();
+        window.scrollTo({ top: 0 });
+      }
+      document.querySelector(".tabs").addEventListener("click", (e) => {
+        const t = e.target.closest(".tab");
+        if (t) showTab(t.dataset.tab);
+      });
+
+      function addFilament(data = {}) {
+        const idx = filList.children.length;
+        const row = document.createElement("div");
+        row.className = "fil";
+        row.innerHTML = `
+          <div class="field f-name">
+            <label>Filamento</label>
+            <div style="display:flex;gap:8px">
+              <input type="color" class="f-color" value="${esc(data.color || PALETTE[idx % PALETTE.length])}" aria-label="Color">
+              <input class="f-label" maxlength="60" placeholder="Ej. PLA negro" value="${esc(data.name || "")}">
+            </div>
+          </div>
+          <div class="field"><label>Gramos / pieza</label>
+            <input class="f-grams" type="number" inputmode="decimal" min="0" step="0.1" value="${nn(data.grams ?? (idx === 0 ? 100 : 0))}"></div>
+          <div class="field"><label>Costo por kg ($)</label>
+            <input class="f-kg" type="number" inputmode="decimal" min="0" step="1" value="${nn(data.kgCost ?? 300)}"></div>
+          <div class="sub"><small>Precio / pieza</small><span class="f-sub">$0.00</span></div>
+          <button type="button" class="btn-danger btn-icon del" aria-label="Quitar filamento" title="Quitar">×</button>`;
+        filList.appendChild(row);
+        syncDeleteButtons();
+        updateCalc();
+      }
+      function syncDeleteButtons() {
+        const rows = filList.querySelectorAll(".fil");
+        rows.forEach(r => r.querySelector(".del").style.visibility = rows.length > 1 ? "visible" : "hidden");
+      }
+      function readFilaments() {
+        return [...filList.querySelectorAll(".fil")].map(r => ({
+          name: r.querySelector(".f-label").value.trim(),
+          color: r.querySelector(".f-color").value,
+          grams: nn(r.querySelector(".f-grams").value),
+          kgCost: nn(r.querySelector(".f-kg").value)
+        }));
+      }
+      function setFilaments(list) {
+        filList.innerHTML = "";
+        (list && list.length ? list : [{}]).forEach(addFilament);
+      }
+      filList.addEventListener("click", (e) => {
+        const del = e.target.closest(".del");
+        if (!del) return;
+        if (filList.children.length > 1) { del.closest(".fil").remove(); syncDeleteButtons(); updateCalc(); }
+      });
+      $("add-fil").addEventListener("click", () => {
+        addFilament({ grams: 0, kgCost: 300 });
+        const last = filList.lastElementChild.querySelector(".f-label");
+        last && last.focus();
+      });
+
+      function compute() {
         const quantity = Math.max(1, Math.floor(num("quantity")));
-        const grams = num("grams");
-        const kgCost = num("kgCost");
-        const hours = num("hours");
-        const rate = num("rate");
-        const electricity = num("electricity");
-        const labor = num("labor");
-        const design = num("design");
-        const extras = num("extras");
-        const failureRate = Math.min(100, num("failure")) / 100;
-        const marginRate = Math.min(500, num("margin")) / 100;
-
-        const material = grams * kgCost / 1000 * quantity;
+        const fils = readFilaments();
+        const gramsPiece = fils.reduce((s, f) => s + f.grams, 0);
+        const matPiece = fils.reduce((s, f) => s + f.grams * f.kgCost / 1000, 0);
+        const avgKg = gramsPiece > 0 ? matPiece / gramsPiece * 1000 : 0;
+        const purgeG = num("purge");
+        const purgePiece = purgeG * avgKg / 1000;
+        const material = (matPiece + purgePiece) * quantity;
+        const hours = num("hours"), rate = num("rate");
         const machine = hours * rate * quantity;
-        const electric = electricity;
-        const laborTotal = labor;
-        const designTotal = design;
-        const extrasTotal = extras;
+        const electric = num("electricity"), laborTotal = num("labor"), designTotal = num("design"), extrasTotal = num("extras");
         const subtotal = material + machine + electric + laborTotal + designTotal + extrasTotal;
-        const failure = subtotal * failureRate;
+        const failureRate = Math.min(100, num("failure"));
+        const marginRate = Math.min(500, num("margin"));
+        const matMarginRate = Math.min(500, num("matMargin"));
+        const failure = subtotal * failureRate / 100;
         const cost = subtotal + failure;
-        const profit = cost * marginRate;
+        const materialProfit = material * matMarginRate / 100;
+        const otherProfit = (cost - material) * marginRate / 100;
+        const profit = materialProfit + otherProfit;
         const total = cost + profit;
-        return {
-          client: $("client").value.trim(),
-          piece: $("piece").value.trim(),
-          category: $("category").value,
-          quantity, grams, kgCost, hours, rate, electricity, labor, design, extras,
-          failureRate: failureRate * 100, marginRate: marginRate * 100,
-          material, machine, electric, laborTotal, designTotal, extrasTotal,
-          failure, cost, profit, total, unitPrice: total / quantity,
-          notes: $("notes").value.trim()
-        };
+        return { quantity, filaments: fils, grams: gramsPiece + purgeG, gramsPiece, purgeG, hours, rate, avgKg,
+          matPiece, material, machine, electric, laborTotal, designTotal, extrasTotal,
+          failureRate, marginRate, matMarginRate, failure, cost, materialProfit, otherProfit, profit, total, unitPrice: total / quantity };
       }
       function updateCalc() {
-        const v = values();
-        $("total-price").textContent = currency(v.total);
-        $("unit-price").textContent = `Precio por pieza: ${currency(v.unitPrice)} · Cantidad: ${v.quantity}`;
-        $("out-material").textContent = currency(v.material);
-        $("out-machine").textContent = currency(v.machine);
-        $("out-electricity").textContent = currency(v.electric);
-        $("out-labor").textContent = currency(v.laborTotal);
-        $("out-design").textContent = currency(v.designTotal);
-        $("out-extras").textContent = currency(v.extrasTotal);
-        $("out-failure").textContent = currency(v.failure);
-        $("out-cost").textContent = currency(v.cost);
-        $("out-profit").textContent = currency(v.profit);
-      }
-      function safeText(value) {
-        return String(value ?? "").replace(/[&<>"']/g, ch => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-        })[ch]);
-      }
-      function renderHistory() {
-        const container = $("history-container");
-        if (!history.length) {
-          container.innerHTML = '<div class="empty">Todavía no has guardado cotizaciones. Completa el formulario y pulsa “Guardar en historial”.</div>';
-          return;
-        }
-        const sorted = [...history].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-        container.innerHTML = `
-          <div class="table-wrap">
-            <table>
-              <thead><tr>
-                <th>Fecha</th><th>Cliente / pieza</th><th>Categoría</th><th>Cant.</th>
-                <th>Gramos / pieza</th><th>Horas / pieza</th><th>Precio / pieza</th><th>Total</th><th class="action-cell">Acción</th>
-              </tr></thead>
-              <tbody>${sorted.map(item => `
-                <tr>
-                  <td>${safeText(formatDate(item.createdAt))}</td>
-                  <td><strong>${safeText(item.piece)}</strong><br><span class="hint">${safeText(item.client || "Sin cliente")}</span></td>
-                  <td><span class="tag">${safeText(item.category)}</span></td>
-                  <td class="numeric">${Number(item.quantity) || 1}</td>
-                  <td class="numeric">${(Number(item.grams) || 0).toLocaleString("es-MX")}</td>
-                  <td class="numeric">${(Number(item.hours) || 0).toLocaleString("es-MX")}</td>
-                  <td class="numeric">${currency(Number(item.unitPrice) || 0)}</td>
-                  <td class="numeric"><strong>${currency(Number(item.total) || 0)}</strong></td>
-                  <td class="action-cell"><button class="secondary small" type="button" data-load="${safeText(item.id)}">Cargar</button> <button class="danger small" type="button" data-delete="${safeText(item.id)}" aria-label="Eliminar cotización">Eliminar</button></td>
-                </tr>`).join("")}</tbody>
-            </table>
-          </div>`;
-      }
-      function formatDate(iso) {
-        if (!iso) return "Fecha desconocida";
-        const date = new Date(iso);
-        return Number.isNaN(date.getTime()) ? "Fecha desconocida" : date.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" });
-      }
-      function formSnapshot() {
-        const data = {};
-        ["client","piece","category","quantity","grams","kgCost","hours","rate","electricity","labor","design","extras","failure","margin","notes"].forEach(id => data[id] = $(id).value);
-        return data;
-      }
-      function loadIntoForm(item) {
-        const keys = ["client","piece","category","quantity","grams","kgCost","hours","rate","electricity","labor","design","extras","failure","margin","notes"];
-        keys.forEach(key => { if (item[key] !== undefined && $(key)) $(key).value = item[key]; });
-        updateCalc();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        $("form-status").textContent = "Cotización cargada en el formulario. Puedes editarla y guardarla como un nuevo registro.";
+        const v = compute();
+        filList.querySelectorAll(".fil").forEach((r, i) => {
+          const f = v.filaments[i];
+          r.querySelector(".f-sub").textContent = money(f.grams * f.kgCost / 1000 * (1 + v.matMarginRate / 100));
+        });
+        const sellPiece = v.matPiece * (1 + v.matMarginRate / 100);
+        $("fil-total").innerHTML = `<strong>${v.gramsPiece.toLocaleString("es-MX")} g</strong> por pieza · material cobrado <strong>${money(sellPiece)}</strong>`;
+        $("out-matprofit").textContent = money(v.materialProfit);
+        $("total-price").textContent = money(v.total);
+        $("mb-price").textContent = money(v.total);
+        $("unit-price").textContent = `Por pieza: ${money(v.unitPrice)} · Cantidad: ${v.quantity}`;
+        $("out-material").textContent = money(v.material);
+        $("out-machine").textContent = money(v.machine);
+        $("out-electricity").textContent = money(v.electric);
+        $("out-labor").textContent = money(v.laborTotal);
+        $("out-design").textContent = money(v.designTotal);
+        $("out-extras").textContent = money(v.extrasTotal);
+        $("out-failure").textContent = money(v.failure);
+        $("out-cost").textContent = money(v.cost);
+        $("out-profit").textContent = money(v.otherProfit);
+        $("out-gain").textContent = money(v.profit);
+        $("lbl-matprofit").textContent = `Sobre el material (${v.matMarginRate}% de ${money(v.material)})`;
+        $("lbl-profit").textContent = `Sobre el resto (${v.marginRate}% de ${money(v.cost - v.material)})`;
       }
       form.addEventListener("input", updateCalc);
       form.addEventListener("change", updateCalc);
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (!form.reportValidity()) return;
-        const v = values();
-        if (!v.piece) {
-          $("piece").focus();
-          $("form-status").textContent = "Escribe el nombre de la pieza.";
+      $("mb-details").addEventListener("click", () => $("summary").scrollIntoView({ behavior: "smooth", block: "start" }));
+
+      function itemFilaments(item) {
+        if (Array.isArray(item.filaments) && item.filaments.length) return item.filaments;
+        return [{ name: "", color: "#1f2421", grams: nn(item.grams), kgCost: nn(item.kgCost) }];
+      }
+      const isSold = (item) => item.sold === true;
+      function fmtDate(iso) {
+        const d = iso ? new Date(iso) : null;
+        return d && !isNaN(d) ? d.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "Fecha desconocida";
+      }
+      function renderHistory() {
+        const box = $("history-container");
+        if (!history.length) {
+          box.innerHTML = '<div class="empty">Aún no hay pedidos. Crea una cotización en la pestaña “Cotizador” y guárdala.</div>';
           return;
         }
+        let list = [...history].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+        if (filter === "pending") list = list.filter(i => !isSold(i));
+        if (filter === "sold") list = list.filter(isSold);
+        if (!list.length) { box.innerHTML = '<div class="empty">No hay pedidos en esta vista.</div>'; return; }
+        box.innerHTML = `<div class="hist-grid">${list.map(item => {
+          const fils = itemFilaments(item);
+          const chips = fils.map(f => `<span class="chip"><i class="dot" style="background:${esc(f.color || "#999")}"></i>${esc(f.name || "Filamento")} · ${nn(f.grams)} g</span>`).join("");
+          const sold = isSold(item);
+          const real = nn(item.soldPrice);
+          const gain = real - nn(item.cost);
+          return `
+          <article class="q ${sold ? "sold" : ""}">
+            <div class="q-top">
+              <div><div class="q-name">${esc(item.piece)}</div><div class="q-client">${esc(item.client || "Sin cliente")}</div></div>
+              <div class="q-total"><small>${sold ? "Cobrado" : "Cotizado"}</small>${money(sold ? real : nn(item.total))}</div>
+            </div>
+            <div class="chips">
+              <span class="chip ${sold ? "ok" : "pending"}">${sold ? "Vendida" : "Por cobrar"}</span>
+              ${chips}
+            </div>
+            <div class="q-meta">${esc(item.category || "")} · ${Math.max(1, Number(item.quantity) || 1)} pza · ${nn(item.hours)} h/pza<br>Costo estimado: ${money(nn(item.cost))}<br>${esc(fmtDate(item.createdAt))}</div>
+            ${sold ? `<div class="q-profit ${gain >= 0 ? "pos" : "neg"}">Ganancia: ${money(gain)} (${real > 0 ? Math.round(gain / real * 100) : 0}% de margen)</div>` : ""}
+            <div class="q-actions">
+              ${sold
+                ? `<button class="btn-ghost btn-sm" type="button" data-unsell="${esc(item.id)}">Deshacer venta</button>`
+                : `<button class="btn-sale btn-sm" type="button" data-sell="${esc(item.id)}">Marcar vendida</button>`}
+              <button class="btn-ghost btn-sm" type="button" data-load="${esc(item.id)}">Cargar</button>
+              <button class="btn-danger btn-sm" type="button" data-delete="${esc(item.id)}">Eliminar</button>
+            </div>
+          </article>`;
+        }).join("")}</div>`;
+      }
+      function loadIntoForm(item) {
+        FIELD_IDS.forEach(k => { if (item[k] !== undefined && $(k)) $(k).value = item[k]; });
+        if (item.failure === undefined && item.failureRate !== undefined) $("failure").value = item.failureRate;
+        if (item.margin === undefined && item.marginRate !== undefined) $("margin").value = item.marginRate;
+        if (item.matMargin === undefined) $("matMargin").value = 0;
+        setFilaments(itemFilaments(item));
+        updateCalc();
+        showTab("quote");
+        $("form-status").textContent = "Pedido cargado. Puedes editarlo y guardarlo como nuevo.";
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const piece = $("piece").value.trim();
+        if (!piece) { $("piece").focus(); $("form-status").textContent = "Escribe el nombre de la pieza."; return; }
+        const v = compute();
+        const snap = {};
+        FIELD_IDS.forEach(k => snap[k] = $(k).value);
         const record = {
-          ...formSnapshot(), ...v,
-          id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          createdAt: new Date().toISOString()
+          ...snap, ...v, piece, client: $("client").value.trim(), category: $("category").value, notes: $("notes").value.trim(),
+          kgCost: v.avgKg, sold: false,
+          id: uid(), createdAt: new Date().toISOString()
         };
         history.push(record);
         if (saveHistory()) {
           renderHistory();
-          $("form-status").textContent = "Cotización guardada en el historial de este navegador.";
-          $("history-status").textContent = "";
+          $("form-status").textContent = "Cotización guardada. Cuando te paguen, márcala como vendida en “Pedidos y ventas”.";
         }
       });
       $("reset-btn").addEventListener("click", () => {
         form.reset();
+        setFilaments([{}]);
         $("form-status").textContent = "";
         updateCalc();
       });
-      $("history-container").addEventListener("click", (event) => {
-        const loadButton = event.target.closest("[data-load]");
-        const deleteButton = event.target.closest("[data-delete]");
-        if (loadButton) {
-          const item = history.find(row => row.id === loadButton.dataset.load);
-          if (item) loadIntoForm(item);
+      $("history-container").addEventListener("click", (e) => {
+        const l = e.target.closest("[data-load]"), d = e.target.closest("[data-delete]");
+        const s = e.target.closest("[data-sell]"), u = e.target.closest("[data-unsell]");
+        if (l) { const it = history.find(r => r.id === l.dataset.load); if (it) loadIntoForm(it); }
+        if (s) {
+          const it = history.find(r => r.id === s.dataset.sell);
+          if (!it) return;
+          const ans = prompt(`¿Cuánto cobraste en total por “${it.piece}”?`, String(Math.round(nn(it.total) * 100) / 100));
+          if (ans === null) return;
+          const amount = Number(String(ans).replace(/[$,\s]/g, ""));
+          if (!Number.isFinite(amount) || amount < 0) { $("history-status").textContent = "Escribe un monto válido."; return; }
+          it.sold = true; it.soldPrice = amount; it.soldAt = new Date().toISOString();
+          if (saveHistory()) { renderHistory(); $("history-status").textContent = "Venta registrada. Ya cuenta en el dashboard."; }
         }
-        if (deleteButton) {
-          const item = history.find(row => row.id === deleteButton.dataset.delete);
-          if (item && confirm(`¿Eliminar la cotización “${item.piece}” del historial?`)) {
-            history = history.filter(row => row.id !== item.id);
-            saveHistory();
-            renderHistory();
-            $("history-status").textContent = "Cotización eliminada.";
+        if (u) {
+          const it = history.find(r => r.id === u.dataset.unsell);
+          if (it) { it.sold = false; delete it.soldPrice; delete it.soldAt; saveHistory(); renderHistory(); $("history-status").textContent = "Venta deshecha."; }
+        }
+        if (d) {
+          const it = history.find(r => r.id === d.dataset.delete);
+          if (it && confirm(`¿Eliminar el pedido “${it.piece}”?`)) {
+            history = history.filter(r => r.id !== it.id);
+            saveHistory(); renderHistory();
+            $("history-status").textContent = "Pedido eliminado.";
           }
         }
       });
+      $("filters").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-filter]");
+        if (!b) return;
+        filter = b.dataset.filter;
+        $("filters").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+        renderHistory();
+      });
       $("clear-btn").addEventListener("click", () => {
-        if (!history.length) { $("history-status").textContent = "El historial ya está vacío."; return; }
-        if (confirm("¿Seguro que quieres borrar todo el historial de este navegador? Esta acción no se puede deshacer. Descarga un respaldo antes si quieres conservarlo.")) {
-          history = [];
-          saveHistory();
-          renderHistory();
-          $("history-status").textContent = "Historial borrado.";
+        if (!history.length) { $("history-status").textContent = "No hay pedidos que borrar."; return; }
+        if (confirm("¿Borrar TODOS los pedidos y ventas de este navegador? No se puede deshacer. Descarga un respaldo antes si lo quieres conservar. (Tus compras e inversión no se borran.)")) {
+          history = []; saveHistory(); renderHistory();
+          $("history-status").textContent = "Pedidos borrados.";
         }
       });
-      function downloadFile(filename, content, mime) {
-        const blob = new Blob([content], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+
+      function renderDashboard() {
+        const sold = history.filter(isSold);
+        const revenue = sold.reduce((s, i) => s + nn(i.soldPrice), 0);
+        const prodCost = sold.reduce((s, i) => s + nn(i.cost), 0);
+        const gain = revenue - prodCost;
+        const margin = revenue > 0 ? gain / revenue * 100 : 0;
+        const pending = history.filter(i => !isSold(i));
+        const pendingVal = pending.reduce((s, i) => s + nn(i.total), 0);
+        const invested = expenses.reduce((s, e) => s + nn(e.cost), 0);
+        const cash = revenue - invested;
+        const recovered = invested > 0 ? revenue / invested * 100 : (revenue > 0 ? 100 : 0);
+
+        const v = $("verdict");
+        let cls = "gray", light = "–", title = "Sin datos todavía", text = "Registra tus compras y marca tus primeras ventas para ver cómo vas.";
+        if (sold.length) {
+          if (cash >= 0 && gain > 0) { cls = "green"; light = "✓"; title = "Vamos en verde"; text = `Ya recuperaste lo invertido y te sobran ${money(cash)}. Tu margen sobre ventas es de ${margin.toFixed(1)}%.`; }
+          else if (gain > 0) { cls = "yellow"; light = "!"; title = "En camino, aún en amarillo"; text = `Cada venta te deja ganancia (margen ${margin.toFixed(1)}%), pero todavía faltan ${money(-cash)} para recuperar lo que has invertido.`; }
+          else { cls = "red"; light = "×"; title = "Vamos en rojo"; text = `Tus ventas no cubren su costo estimado (${money(gain)}). Revisa tus precios o tu recargo en el cotizador.`; }
+        } else if (invested > 0) { cls = "yellow"; light = "!"; title = "Inversión registrada, sin ventas aún"; text = `Has invertido ${money(invested)}. Marca tus pedidos cobrados como vendidos para medir tu avance.`; }
+        v.className = "verdict " + cls; $("v-light").textContent = light; $("v-title").textContent = title; $("v-text").textContent = text;
+
+        const kpi = (label, val, sub, tone) => `<div class="kpi ${tone || ""}"><div class="k-label">${label}</div><div class="k-val">${val}</div><div class="k-sub">${sub}</div></div>`;
+        $("kpis").innerHTML = [
+          kpi("Ventas cobradas", money(revenue), `${sold.length} pedido${sold.length === 1 ? "" : "s"} vendido${sold.length === 1 ? "" : "s"}`),
+          kpi("Costo de lo vendido", money(prodCost), "Costo estimado de producción"),
+          kpi("Ganancia", money(gain), "Ventas − costo estimado", sold.length ? (gain >= 0 ? "pos" : "neg") : ""),
+          kpi("Margen de ganancia", sold.length ? margin.toFixed(1) + "%" : "–", "Ganancia ÷ ventas", sold.length ? (margin >= 0 ? "pos" : "neg") : ""),
+          kpi("Inversión total", money(invested), `${expenses.length} compra${expenses.length === 1 ? "" : "s"} registrada${expenses.length === 1 ? "" : "s"}`),
+          kpi("Balance de caja", money(cash), "Ventas cobradas − inversión", (sold.length || invested) ? (cash >= 0 ? "pos" : "neg") : ""),
+          kpi("Por cobrar", money(pendingVal), `${pending.length} cotización${pending.length === 1 ? "" : "es"} sin vender`)
+        ].join("");
+
+        const pb = $("payback-bar");
+        pb.className = "progress" + (recovered >= 100 ? " done" : "");
+        pb.firstElementChild.style.width = Math.min(100, recovered) + "%";
+        $("payback-text").textContent = invested > 0
+          ? `Has recuperado ${recovered.toFixed(0)}% de tu inversión (${money(revenue)} de ${money(invested)}).`
+          : "Aún no registras compras. Agrégalas abajo para medir tu recuperación.";
+
+        const byMonth = {};
+        sold.forEach(i => {
+          const d = new Date(i.soldAt || i.createdAt); if (isNaN(d)) return;
+          const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          byMonth[k] = byMonth[k] || { rev: 0, gain: 0 };
+          byMonth[k].rev += nn(i.soldPrice); byMonth[k].gain += nn(i.soldPrice) - nn(i.cost);
+        });
+        const months = Object.keys(byMonth).sort().slice(-6);
+        const max = Math.max(1, ...months.map(m => byMonth[m].rev));
+        $("month-bars").innerHTML = months.length ? months.map(m => {
+          const [y, mo] = m.split("-");
+          const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleString("es-MX", { month: "short", year: "2-digit" });
+          return `<div class="bar-row"><span>${esc(label)}</span><div class="track"><div style="width:${byMonth[m].rev / max * 100}%"></div></div><strong>${money(byMonth[m].rev)}</strong></div>`;
+        }).join("") : '<div class="empty" style="padding:10px">Todavía no hay ventas.</div>';
+
+        const fil = expenses.filter(e => e.category === "Filamento" && nn(e.grams) > 0);
+        const boughtG = fil.reduce((s, e) => s + nn(e.grams), 0);
+        const boughtCost = fil.reduce((s, e) => s + nn(e.cost), 0);
+        const usedG = sold.reduce((s, i) => s + nn(i.grams) * Math.max(1, Number(i.quantity) || 1), 0);
+        const left = boughtG - usedG;
+        const avgKg = boughtG > 0 ? boughtCost / boughtG * 1000 : 0;
+        const g = (x) => `${Math.round(x).toLocaleString("es-MX")} g`;
+        const row = (a, b) => `<div class="row" style="border-color:var(--line)"><span style="color:var(--muted)">${a}</span><strong>${b}</strong></div>`;
+        $("inv-rows").innerHTML = [
+          row("Filamento comprado", `${g(boughtG)} · ${money(boughtCost)}`),
+          row("Usado en pedidos vendidos", g(usedG)),
+          row("Disponible (estimado)", `<span style="color:${left < 0 ? "var(--red)" : "var(--green)"}">${g(left)}</span>`),
+          row("Costo promedio por kg", boughtG > 0 ? money(avgKg) : "–"),
+          row("Valor del filamento disponible", boughtG > 0 ? money(Math.max(0, left) * avgKg / 1000) : "–")
+        ].join("");
+
+        const list = [...expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        $("exp-list").innerHTML = list.length ? list.map(e => `
+          <div class="exp">
+            <div><div class="e-name">${esc(e.concept)}</div><div class="e-meta">${esc(e.category)}${nn(e.grams) ? " · " + g(nn(e.grams)) : ""} · ${esc(e.date || "")}</div></div>
+            <div class="e-right"><span class="e-cost">${money(nn(e.cost))}</span><button class="btn-danger btn-sm" type="button" data-del-exp="${esc(e.id)}" aria-label="Eliminar compra">×</button></div>
+          </div>`).join("") : '<div class="empty" style="padding:14px">Sin compras registradas.</div>';
+      }
+      $("exp-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const concept = $("e-name").value.trim();
+        const cost = nn($("e-cost").value);
+        if (!concept || cost <= 0) { $("exp-status").textContent = "Escribe el concepto y el costo."; $("exp-status").style.color = "var(--red)"; return; }
+        $("exp-status").style.color = "";
+        expenses.push({ id: uid(), concept, category: $("e-cat").value, cost, grams: nn($("e-grams").value),
+          date: $("e-date").value || new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString() });
+        if (saveExpenses()) {
+          $("e-name").value = ""; $("e-cost").value = ""; $("e-grams").value = "";
+          $("exp-status").textContent = "Compra agregada.";
+          renderDashboard();
+        }
+      });
+      $("exp-list").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-del-exp]");
+        if (!b) return;
+        const it = expenses.find(x => x.id === b.dataset.delExp);
+        if (it && confirm(`¿Eliminar la compra “${it.concept}”?`)) { expenses = expenses.filter(x => x.id !== it.id); saveExpenses(); renderDashboard(); }
+      });
+
+      function download(name, content, mime) {
+        const url = URL.createObjectURL(new Blob([content], { type: mime }));
+        const a = document.createElement("a");
+        a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
       $("backup-btn").addEventListener("click", () => {
-        downloadFile(`respaldo-impresion3d-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(history, null, 2), "application/json;charset=utf-8");
-        $("history-status").textContent = "Respaldo JSON preparado para descargar.";
+        const data = { app: "impresion3d", version: 2, history, expenses };
+        download(`respaldo-impresion3d-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(data, null, 2), "application/json;charset=utf-8");
+        $("history-status").textContent = "Respaldo JSON (pedidos, ventas y compras) listo para descargar.";
       });
       $("export-btn").addEventListener("click", () => {
-        if (!history.length) { $("history-status").textContent = "No hay cotizaciones para exportar."; return; }
-        const cols = ["createdAt","client","piece","category","quantity","grams","hours","kgCost","material","machine","electric","laborTotal","designTotal","extrasTotal","failure","cost","profit","unitPrice","total","notes"];
-        const quote = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
-        const csv = [cols.join(","), ...history.map(item => cols.map(col => quote(item[col])).join(","))].join("\r\n");
-        downloadFile(`historial-impresion3d-${new Date().toISOString().slice(0,10)}.csv`, "\ufeff" + csv, "text/csv;charset=utf-8");
-        $("history-status").textContent = "Archivo CSV preparado para descargar.";
+        if (!history.length) { $("history-status").textContent = "No hay pedidos para exportar."; return; }
+        const cols = ["createdAt","client","piece","category","quantity","gramsPiece","purgeG","hours","filamentos","material","machine","electric","laborTotal","designTotal","extrasTotal","failure","cost","profit","unitPrice","total","estado","precioCobrado","fechaVenta","notes"];
+        const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const rows = history.map(it => {
+          const o = { ...it,
+            gramsPiece: it.gramsPiece ?? it.grams,
+            filamentos: itemFilaments(it).map(f => `${f.name || "Filamento"} ${nn(f.grams)}g @ $${nn(f.kgCost)}/kg`).join(" + "),
+            estado: isSold(it) ? "Vendida" : "Por cobrar", precioCobrado: isSold(it) ? it.soldPrice : "", fechaVenta: it.soldAt || "" };
+          return cols.map(c => q(o[c])).join(",");
+        });
+        download(`historial-impresion3d-${new Date().toISOString().slice(0,10)}.csv`, "﻿" + [cols.join(","), ...rows].join("\r\n"), "text/csv;charset=utf-8");
+        $("history-status").textContent = "Archivo CSV listo para descargar.";
       });
       $("import-btn").addEventListener("click", () => $("import-file").click());
-      $("import-file").addEventListener("change", async (event) => {
-        const file = event.target.files && event.target.files[0];
+      $("import-file").addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
         if (!file) return;
         try {
           const parsed = JSON.parse(await file.text());
-          if (!Array.isArray(parsed)) throw new Error("El archivo debe contener una lista de cotizaciones.");
-          const normalized = parsed.filter(item => item && typeof item === "object" && item.piece && item.id);
-          if (!confirm(`Se encontraron ${normalized.length} registros válidos. ¿Añadirlos al historial actual?`)) return;
-          const ids = new Set(history.map(item => item.id));
-          let added = 0;
-          normalized.forEach(item => {
-            if (!ids.has(item.id)) { history.push(item); ids.add(item.id); added++; }
-          });
-          if (saveHistory()) {
-            renderHistory();
-            $("history-status").textContent = `Importación terminada: ${added} registros añadidos; duplicados omitidos.`;
-          }
-        } catch (error) {
-          $("history-status").textContent = "No se pudo importar el archivo. Selecciona un respaldo JSON válido de esta calculadora.";
-        } finally {
-          event.target.value = "";
-        }
+          const hist = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.history) ? parsed.history : null);
+          const exps = (!Array.isArray(parsed) && Array.isArray(parsed.expenses)) ? parsed.expenses : [];
+          if (!hist) throw new Error();
+          const vh = hist.filter(i => i && typeof i === "object" && i.piece && i.id);
+          const ve = exps.filter(i => i && typeof i === "object" && i.concept && i.id);
+          if (!confirm(`Se encontraron ${vh.length} pedidos y ${ve.length} compras válidos. ¿Añadirlos?`)) return;
+          const hid = new Set(history.map(i => i.id)), eid = new Set(expenses.map(i => i.id));
+          let a1 = 0, a2 = 0;
+          vh.forEach(i => { if (!hid.has(i.id)) { history.push(i); hid.add(i.id); a1++; } });
+          ve.forEach(i => { if (!eid.has(i.id)) { expenses.push(i); eid.add(i.id); a2++; } });
+          if (saveHistory() & saveExpenses()) { renderHistory(); renderDashboard(); $("history-status").textContent = `Importación lista: ${a1} pedidos y ${a2} compras añadidos; duplicados omitidos.`; }
+        } catch (err) {
+          $("history-status").textContent = "No se pudo importar. Elige un respaldo JSON válido de esta calculadora.";
+        } finally { e.target.value = ""; }
       });
       $("print-btn").addEventListener("click", () => window.print());
 
-      // Initial state
-      updateCalc();
+      $("e-date").value = new Date().toISOString().slice(0, 10);
+      setFilaments([{}]);
       renderHistory();
+      renderDashboard();
     })();
   </script>
 </body>
