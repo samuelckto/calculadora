@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Calculadora de impresión 3D | Bambú Lab A1 Mini</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f9;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #647084;
+      --line: #e1e6ef;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --good: #087f5b;
+      --danger: #b42318;
+      --soft: #edf3ff;
+      --shadow: 0 12px 35px rgba(23, 32, 51, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #111827, #263c66);
+      color: white;
+      padding: 30px 18px 28px;
+    }
+    .header-inner, main { max-width: 1120px; margin: 0 auto; }
+    .eyebrow { margin: 0 0 7px; color: #c8d7ff; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.65rem, 4vw, 2.45rem); line-height: 1.12; }
+    .subtitle { margin: 10px 0 0; color: #e0e7f5; max-width: 720px; }
+    main { padding: 22px 16px 44px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .88fr); gap: 18px; align-items: start; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+      padding: 20px; box-shadow: var(--shadow); min-width: 0;
+    }
+    h2 { font-size: 1.15rem; margin: 0 0 16px; }
+    h3 { font-size: 1rem; margin: 0 0 10px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-weight: 700; font-size: .88rem; }
+    input, select, textarea {
+      width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cfd6e2;
+      border-radius: 10px; background: #fff; color: var(--text); font: inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline: 3px solid #bfdbfe; border-color: var(--accent); }
+    .hint { color: var(--muted); font-size: .78rem; margin: 0; }
+    .section-label { grid-column: 1 / -1; margin: 7px 0 -3px; padding-top: 10px; border-top: 1px solid var(--line); color: #3d4b63; font-size: .76rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
+    button {
+      appearance: none; border: 0; border-radius: 10px; padding: 11px 15px;
+      font: inherit; font-weight: 800; cursor: pointer; transition: transform .06s ease, background .15s ease;
+    }
+    button:active { transform: translateY(1px); }
+    .primary { background: var(--accent); color: white; }
+    .primary:hover { background: var(--accent-dark); }
+    .secondary { background: #e9edf5; color: #26344b; }
+    .secondary:hover { background: #dfe5ef; }
+    .danger { background: #fff0ef; color: var(--danger); }
+    .small { padding: 7px 10px; font-size: .8rem; }
+    .result-hero { padding: 18px; background: var(--soft); border: 1px solid #d6e4ff; border-radius: 14px; margin-bottom: 14px; }
+    .result-hero .label { color: #435675; font-size: .82rem; font-weight: 800; }
+    .price { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; color: var(--good); font-weight: 900; margin: 5px 0; letter-spacing: -.04em; }
+    .result-hero p { margin: 0; color: #50617c; font-size: .82rem; }
+    .breakdown { display: grid; gap: 0; }
+    .breakdown-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .breakdown-row:last-child { border-bottom: 0; }
+    .breakdown-row span:first-child { color: var(--muted); }
+    .breakdown-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+    .notice { margin: 14px 0 0; font-size: .8rem; color: var(--muted); }
+    .history-panel { margin-top: 18px; }
+    .history-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .history-head h2 { margin: 0; }
+    .history-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .86rem; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f8faff; color: #526078; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+    td.numeric { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .empty { padding: 28px 10px; text-align: center; color: var(--muted); }
+    .tag { display: inline-block; padding: 3px 7px; border-radius: 999px; background: #eef2f7; color: #45546a; font-size: .72rem; font-weight: 800; }
+    .status { min-height: 1.3em; margin: 10px 0 0; font-size: .85rem; color: var(--good); }
+    footer { max-width: 1120px; margin: 0 auto; padding: 0 16px 28px; color: var(--muted); font-size: .8rem; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel { padding: 16px; }
+    }
+    @media (max-width: 480px) {
+      .field-grid { grid-template-columns: 1fr; }
+      .field.full, .section-label { grid-column: auto; }
+      header { padding-top: 24px; }
+    }
+    @media print {
+      body { background: white; }
+      header { background: white; color: black; padding: 10px 0; }
+      .subtitle, .eyebrow { color: #444; }
+      main { padding: 10px 0; }
+      .layout { grid-template-columns: 1fr 1fr; }
+      .panel { box-shadow: none; break-inside: avoid; }
+      .buttons, .history-actions, .action-cell, footer { display: none !important; }
+      .history-panel { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <p class="eyebrow">Herramienta para tu emprendimiento</p>
+      <h1>Calculadora de impresión 3D</h1>
+      <p class="subtitle">Cotiza piezas con tu Bambu Lab A1 Mini, calcula tus costos y guarda un historial de cotizaciones en este navegador.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Datos de la cotización</h2>
+        <form id="quote-form">
+          <div class="field-grid">
+            <div class="field full">
+              <label for="client">Cliente (opcional)</label>
+              <input id="client" maxlength="100" placeholder="Nombre del cliente">
+            </div>
+            <div class="field full">
+              <label for="piece">Nombre de la pieza / pedido *</label>
+              <input id="piece" maxlength="140" placeholder="Ej. Soporte para celular" required>
+            </div>
+            <div class="field">
+              <label for="category">Categoría</label>
+              <select id="category">
+                <option>Figuras y decoración</option>
+                <option>Llaveros</option>
+                <option>Piezas funcionales / repuestos</option>
+                <option>Soportes para celular</option>
+                <option>Accesorios gamer</option>
+                <option>Organizadores</option>
+                <option>Piezas personalizadas</option>
+                <option>Archivo del cliente (STL/3MF)</option>
+                <option>Diseño 3D desde cero</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="quantity">Cantidad de piezas</label>
+              <input id="quantity" type="number" min="1" step="1" value="1" required>
+            </div>
+
+            <div class="section-label">Material e impresión</div>
+            <div class="field">
+              <label for="grams">Filamento por pieza (g)</label>
+              <input id="grams" type="number" min="0" step="0.1" value="100" required>
+            </div>
+            <div class="field">
+              <label for="kgCost">Costo del filamento por kg ($)</label>
+              <input id="kgCost" type="number" min="0" step="1" value="250" required>
+            </div>
+            <div class="field">
+              <label for="hours">Horas por pieza</label>
+              <input id="hours" type="number" min="0" step="0.1" value="3" required>
+            </div>
+            <div class="field">
+              <label for="rate">Tarifa de impresora por hora ($)</label>
+              <input id="rate" type="number" min="0" step="0.5" value="10" required>
+            </div>
+
+            <div class="section-label">Otros costos y ganancia</div>
+            <div class="field">
+              <label for="electricity">Electricidad por pedido ($)</label>
+              <input id="electricity" type="number" min="0" step="0.5" value="3" required>
+            </div>
+            <div class="field">
+              <label for="labor">Mano de obra / preparación ($)</label>
+              <input id="labor" type="number" min="0" step="1" value="10" required>
+            </div>
+            <div class="field">
+              <label for="design">Diseño / modelado ($)</label>
+              <input id="design" type="number" min="0" step="1" value="0" required>
+            </div>
+            <div class="field">
+              <label for="extras">Otros costos por pedido ($)</label>
+              <input id="extras" type="number" min="0" step="1" value="5" required>
+            </div>
+            <div class="field">
+              <label for="failure">Reserva para fallas (%)</label>
+              <input id="failure" type="number" min="0" max="100" step="1" value="5" required>
+              <p class="hint">Reserva para reimpresiones y desperdicio.</p>
+            </div>
+            <div class="field">
+              <label for="margin">Recargo sobre el costo (%)</label>
+              <input id="margin" type="number" min="0" max="500" step="1" value="25" required>
+            </div>
+            <div class="field full">
+              <label for="notes">Notas (opcional)</label>
+              <textarea id="notes" rows="2" maxlength="500" placeholder="Color, medidas, entrega, cambios acordados…"></textarea>
+            </div>
+          </div>
+          <div class="buttons">
+            <button class="primary" type="submit">Guardar en historial</button>
+            <button class="secondary" type="button" id="reset-btn">Restablecer formulario</button>
+          </div>
+          <p id="form-status" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <aside class="panel" aria-labelledby="result-title">
+        <h2 id="result-title">Resumen de precio</h2>
+        <div class="result-hero">
+          <div class="label">Precio sugerido del pedido completo</div>
+          <div class="price" id="total-price">$0.00</div>
+          <p id="unit-price">Precio por pieza: $0.00</p>
+        </div>
+        <div class="breakdown" aria-live="polite">
+          <div class="breakdown-row"><span>Material total</span><strong id="out-material">$0.00</strong></div>
+          <div class="breakdown-row"><span>Uso de impresora</span><strong id="out-machine">$0.00</strong></div>
+          <div class="breakdown-row"><span>Electricidad</span><strong id="out-electricity">$0.00</strong></div>
+          <div class="breakdown-row"><span>Mano de obra</span><strong id="out-labor">$0.00</strong></div>
+          <div class="breakdown-row"><span>Diseño / modelado</span><strong id="out-design">$0.00</strong></div>
+          <div class="breakdown-row"><span>Otros costos</span><strong id="out-extras">$0.00</strong></div>
+          <div class="breakdown-row"><span>Reserva por fallas</span><strong id="out-failure">$0.00</strong></div>
+          <div class="breakdown-row"><span>Costo estimado</span><strong id="out-cost">$0.00</strong></div>
+          <div class="breakdown-row"><span>Recargo</span><strong id="out-profit">$0.00</strong></div>
+        </div>
+        <p class="notice">Estimación: revisa el precio final según la complejidad, el acabado, la demanda y los precios de tu zona. La tarifa por hora debe cubrir desgaste y mantenimiento; la electricidad se suma por separado.</p>
+      </aside>
+    </div>
+
+    <section class="panel history-panel" aria-labelledby="history-title">
+      <div class="history-head">
+        <div>
+          <h2 id="history-title">Historial de cotizaciones</h2>
+          <p class="hint">Se guarda en el almacenamiento local de este navegador; no requiere base de datos ni conexión a internet.</p>
+        </div>
+        <div class="history-actions">
+          <button class="secondary small" id="export-btn" type="button">Exportar CSV</button>
+          <button class="secondary small" id="backup-btn" type="button">Descargar respaldo JSON</button>
+          <button class="secondary small" id="import-btn" type="button">Importar respaldo</button>
+          <button class="secondary small" id="print-btn" type="button">Imprimir</button>
+          <button class="danger small" id="clear-btn" type="button">Borrar historial</button>
+          <input id="import-file" type="file" accept=".json,application/json" hidden>
+        </div>
+      </div>
+      <div id="history-container">
+        <div class="empty">Todavía no has guardado cotizaciones. Completa el formulario y pulsa “Guardar en historial”.</div>
+      </div>
+      <p id="history-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Importante sobre el historial:</strong> como esta versión no usa servidor ni base de datos, los datos se guardan en el navegador y dispositivo donde abras esta página. No se sincronizan automáticamente entre dispositivos ni con otros usuarios. Exporta un respaldo JSON periódicamente para no perder tus registros si borras los datos del navegador.</p>
+  </footer>
+
+  <script>
+    (() => {
+      "use strict";
+      const STORAGE_KEY = "impresion3d_quote_history_v1";
+      const $ = (id) => document.getElementById(id);
+      const form = $("quote-form");
+      const currency = (value) => new Intl.NumberFormat("es-MX", {
+        style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2
+      }).format(Number.isFinite(value) ? value : 0);
+      const num = (id) => Math.max(0, Number($(id).value) || 0);
+      let history = loadHistory();
+
+      function loadHistory() {
+        try {
+          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          return Array.isArray(data) ? data.filter(item => item && typeof item === "object") : [];
+        } catch (error) {
+          return [];
+        }
+      }
+      function saveHistory() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+          return true;
+        } catch (error) {
+          $("history-status").textContent = "No se pudo guardar. Exporta un respaldo y revisa el almacenamiento disponible del navegador.";
+          return false;
+        }
+      }
+      function values() {
+        const quantity = Math.max(1, Math.floor(num("quantity")));
+        const grams = num("grams");
+        const kgCost = num("kgCost");
+        const hours = num("hours");
+        const rate = num("rate");
+        const electricity = num("electricity");
+        const labor = num("labor");
+        const design = num("design");
+        const extras = num("extras");
+        const failureRate = Math.min(100, num("failure")) / 100;
+        const marginRate = Math.min(500, num("margin")) / 100;
+
+        const material = grams * kgCost / 1000 * quantity;
+        const machine = hours * rate * quantity;
+        const electric = electricity;
+        const laborTotal = labor;
+        const designTotal = design;
+        const extrasTotal = extras;
+        const subtotal = material + machine + electric + laborTotal + designTotal + extrasTotal;
+        const failure = subtotal * failureRate;
+        const cost = subtotal + failure;
+        const profit = cost * marginRate;
+        const total = cost + profit;
+        return {
+          client: $("client").value.trim(),
+          piece: $("piece").value.trim(),
+          category: $("category").value,
+          quantity, grams, kgCost, hours, rate, electricity, labor, design, extras,
+          failureRate: failureRate * 100, marginRate: marginRate * 100,
+          material, machine, electric, laborTotal, designTotal, extrasTotal,
+          failure, cost, profit, total, unitPrice: total / quantity,
+          notes: $("notes").value.trim()
+        };
+      }
+      function updateCalc() {
+        const v = values();
+        $("total-price").textContent = currency(v.total);
+        $("unit-price").textContent = `Precio por pieza: ${currency(v.unitPrice)} · Cantidad: ${v.quantity}`;
+        $("out-material").textContent = currency(v.material);
+        $("out-machine").textContent = currency(v.machine);
+        $("out-electricity").textContent = currency(v.electric);
+        $("out-labor").textContent = currency(v.laborTotal);
+        $("out-design").textContent = currency(v.designTotal);
+        $("out-extras").textContent = currency(v.extrasTotal);
+        $("out-failure").textContent = currency(v.failure);
+        $("out-cost").textContent = currency(v.cost);
+        $("out-profit").textContent = currency(v.profit);
+      }
+      function safeText(value) {
+        return String(value ?? "").replace(/[&<>"']/g, ch => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[ch]);
+      }
+      function renderHistory() {
+        const container = $("history-container");
+        if (!history.length) {
+          container.innerHTML = '<div class="empty">Todavía no has guardado cotizaciones. Completa el formulario y pulsa “Guardar en historial”.</div>';
+          return;
+        }
+        const sorted = [...history].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+        container.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Fecha</th><th>Cliente / pieza</th><th>Categoría</th><th>Cant.</th>
+                <th>Gramos / pieza</th><th>Horas / pieza</th><th>Precio / pieza</th><th>Total</th><th class="action-cell">Acción</th>
+              </tr></thead>
+              <tbody>${sorted.map(item => `
+                <tr>
+                  <td>${safeText(formatDate(item.createdAt))}</td>
+                  <td><strong>${safeText(item.piece)}</strong><br><span class="hint">${safeText(item.client || "Sin cliente")}</span></td>
+                  <td><span class="tag">${safeText(item.category)}</span></td>
+                  <td class="numeric">${Number(item.quantity) || 1}</td>
+                  <td class="numeric">${(Number(item.grams) || 0).toLocaleString("es-MX")}</td>
+                  <td class="numeric">${(Number(item.hours) || 0).toLocaleString("es-MX")}</td>
+                  <td class="numeric">${currency(Number(item.unitPrice) || 0)}</td>
+                  <td class="numeric"><strong>${currency(Number(item.total) || 0)}</strong></td>
+                  <td class="action-cell"><button class="secondary small" type="button" data-load="${safeText(item.id)}">Cargar</button> <button class="danger small" type="button" data-delete="${safeText(item.id)}" aria-label="Eliminar cotización">Eliminar</button></td>
+                </tr>`).join("")}</tbody>
+            </table>
+          </div>`;
+      }
+      function formatDate(iso) {
+        if (!iso) return "Fecha desconocida";
+        const date = new Date(iso);
+        return Number.isNaN(date.getTime()) ? "Fecha desconocida" : date.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" });
+      }
+      function formSnapshot() {
+        const data = {};
+        ["client","piece","category","quantity","grams","kgCost","hours","rate","electricity","labor","design","extras","failure","margin","notes"].forEach(id => data[id] = $(id).value);
+        return data;
+      }
+      function loadIntoForm(item) {
+        const keys = ["client","piece","category","quantity","grams","kgCost","hours","rate","electricity","labor","design","extras","failure","margin","notes"];
+        keys.forEach(key => { if (item[key] !== undefined && $(key)) $(key).value = item[key]; });
+        updateCalc();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        $("form-status").textContent = "Cotización cargada en el formulario. Puedes editarla y guardarla como un nuevo registro.";
+      }
+      form.addEventListener("input", updateCalc);
+      form.addEventListener("change", updateCalc);
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const v = values();
+        if (!v.piece) {
+          $("piece").focus();
+          $("form-status").textContent = "Escribe el nombre de la pieza.";
+          return;
+        }
+        const record = {
+          ...formSnapshot(), ...v,
+          id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString()
+        };
+        history.push(record);
+        if (saveHistory()) {
+          renderHistory();
+          $("form-status").textContent = "Cotización guardada en el historial de este navegador.";
+          $("history-status").textContent = "";
+        }
+      });
+      $("reset-btn").addEventListener("click", () => {
+        form.reset();
+        $("form-status").textContent = "";
+        updateCalc();
+      });
+      $("history-container").addEventListener("click", (event) => {
+        const loadButton = event.target.closest("[data-load]");
+        const deleteButton = event.target.closest("[data-delete]");
+        if (loadButton) {
+          const item = history.find(row => row.id === loadButton.dataset.load);
+          if (item) loadIntoForm(item);
+        }
+        if (deleteButton) {
+          const item = history.find(row => row.id === deleteButton.dataset.delete);
+          if (item && confirm(`¿Eliminar la cotización “${item.piece}” del historial?`)) {
+            history = history.filter(row => row.id !== item.id);
+            saveHistory();
+            renderHistory();
+            $("history-status").textContent = "Cotización eliminada.";
+          }
+        }
+      });
+      $("clear-btn").addEventListener("click", () => {
+        if (!history.length) { $("history-status").textContent = "El historial ya está vacío."; return; }
+        if (confirm("¿Seguro que quieres borrar todo el historial de este navegador? Esta acción no se puede deshacer. Descarga un respaldo antes si quieres conservarlo.")) {
+          history = [];
+          saveHistory();
+          renderHistory();
+          $("history-status").textContent = "Historial borrado.";
+        }
+      });
+      function downloadFile(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      $("backup-btn").addEventListener("click", () => {
+        downloadFile(`respaldo-impresion3d-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(history, null, 2), "application/json;charset=utf-8");
+        $("history-status").textContent = "Respaldo JSON preparado para descargar.";
+      });
+      $("export-btn").addEventListener("click", () => {
+        if (!history.length) { $("history-status").textContent = "No hay cotizaciones para exportar."; return; }
+        const cols = ["createdAt","client","piece","category","quantity","grams","hours","kgCost","material","machine","electric","laborTotal","designTotal","extrasTotal","failure","cost","profit","unitPrice","total","notes"];
+        const quote = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
+        const csv = [cols.join(","), ...history.map(item => cols.map(col => quote(item[col])).join(","))].join("\r\n");
+        downloadFile(`historial-impresion3d-${new Date().toISOString().slice(0,10)}.csv`, "\ufeff" + csv, "text/csv;charset=utf-8");
+        $("history-status").textContent = "Archivo CSV preparado para descargar.";
+      });
+      $("import-btn").addEventListener("click", () => $("import-file").click());
+      $("import-file").addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        try {
+          const parsed = JSON.parse(await file.text());
+          if (!Array.isArray(parsed)) throw new Error("El archivo debe contener una lista de cotizaciones.");
+          const normalized = parsed.filter(item => item && typeof item === "object" && item.piece && item.id);
+          if (!confirm(`Se encontraron ${normalized.length} registros válidos. ¿Añadirlos al historial actual?`)) return;
+          const ids = new Set(history.map(item => item.id));
+          let added = 0;
+          normalized.forEach(item => {
+            if (!ids.has(item.id)) { history.push(item); ids.add(item.id); added++; }
+          });
+          if (saveHistory()) {
+            renderHistory();
+            $("history-status").textContent = `Importación terminada: ${added} registros añadidos; duplicados omitidos.`;
+          }
+        } catch (error) {
+          $("history-status").textContent = "No se pudo importar el archivo. Selecciona un respaldo JSON válido de esta calculadora.";
+        } finally {
+          event.target.value = "";
+        }
+      });
+      $("print-btn").addEventListener("click", () => window.print());
+
+      // Initial state
+      updateCalc();
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>
