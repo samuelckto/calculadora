@@ -43,6 +43,10 @@
     .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; background: var(--accent); display: grid; place-items: center; font-weight: 900; font-size: 1.05rem; letter-spacing: -.03em; }
     .topbar h1 { margin: 0; font-size: clamp(1.1rem, 3.5vw, 1.45rem); line-height: 1.1; letter-spacing: -.02em; }
     .topbar p { margin: 2px 0 0; color: #b9c0b8; font-size: .82rem; }
+    .sync { margin-left: auto; display: flex; align-items: center; gap: 7px; font-size: .78rem; color: #b9c0b8; white-space: nowrap; }
+    .sync i { width: 9px; height: 9px; border-radius: 50%; background: #8a8f86; }
+    .sync.on i { background: var(--good); }
+    .sync.off i { background: #ff6b5e; }
     .tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
     .tabs::-webkit-scrollbar { display: none; }
     .tab {
@@ -225,6 +229,7 @@
           <h1>Cotizador de impresión 3D</h1>
           <p>Bambu Lab A1 Mini · precios en MXN</p>
         </div>
+        <div class="sync" id="sync"><i></i><span id="sync-text">Conectando…</span></div>
       </div>
       <nav class="tabs" role="tablist" aria-label="Secciones">
         <button class="tab active" role="tab" data-tab="quote" type="button">Cotizador</button>
@@ -438,7 +443,7 @@
     </div>
 
     <footer>
-      <p><strong>Tus datos se guardan solo en este navegador.</strong> Descarga un respaldo JSON de vez en cuando.</p>
+      <p><strong>Los datos se guardan en el servidor</strong> y los ven los 3. Descarga un respaldo JSON de vez en cuando.</p>
     </footer>
   </main>
 
@@ -466,22 +471,76 @@
       const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const PALETTE = ["#1f2421", "#d9480f", "#2f6fdb", "#2f9e5b", "#e0a800", "#8a4fd0"];
       const FIELD_IDS = ["client","piece","category","quantity","hours","purge","rate","electricity","labor","design","extras","failure","matMargin","margin","notes"];
-      let history = loadList(STORAGE_KEY);
-      let expenses = loadList(EXP_KEY);
+      const SHARED = ["rate","electricity","labor","design","extras","failure","matMargin","margin"];
+      let history = [], expenses = [], settings = {}, rev = -1, lastStamp = null, dirty = false;
       let filter = "all";
+      const OFFLINE = "No se pudo guardar: sin conexión con el servidor.";
 
-      function loadList(key) {
+      function setSync(ok) {
+        $("sync").className = "sync " + (ok ? "on" : "off");
+        $("sync-text").textContent = ok ? "Sincronizado" : "Sin conexión";
+      }
+      async function api(path, body) {
+        const r = await fetch("api/" + path, {
+          method: body ? "POST" : "GET", cache: "no-store",
+          headers: body ? { "Content-Type": "application/json" } : undefined,
+          body: body ? JSON.stringify(body) : undefined
+        });
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }
+      function applySettings() {
+        if (!settings.stamp || settings.stamp === lastStamp) return;
+        lastStamp = settings.stamp;
+        SHARED.forEach(k => { if (settings[k] !== undefined && document.activeElement !== $(k)) $(k).value = settings[k]; });
+        updateCalc();
+      }
+      function applyState(s) {
+        history = s.history || []; expenses = s.expenses || []; settings = s.settings || {}; rev = s.rev;
+        applySettings(); renderHistory(); renderDashboard();
+      }
+      async function send(body) {
+        try { applyState(await api("op", body)); setSync(true); return true; }
+        catch (e) { setSync(false); return false; }
+      }
+      async function poll() {
+        if (dirty) return;
         try {
-          const d = JSON.parse(localStorage.getItem(key) || "[]");
-          return Array.isArray(d) ? d.filter(x => x && typeof x === "object") : [];
-        } catch (e) { return []; }
+          const s = await api("state?since=" + rev);
+          setSync(true);
+          if (!s.same) applyState(s);
+        } catch (e) { setSync(false); }
       }
-      function saveList(key, list, statusId) {
-        try { localStorage.setItem(key, JSON.stringify(list)); return true; }
-        catch (e) { $(statusId).textContent = "No se pudo guardar. Descarga un respaldo y revisa el espacio del navegador."; return false; }
+      setInterval(poll, 4000);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+
+      let settingsTimer;
+      function queueSettings() {
+        dirty = true; clearTimeout(settingsTimer);
+        settingsTimer = setTimeout(async () => {
+          const values = {};
+          SHARED.forEach(k => values[k] = $(k).value);
+          await send({ op: "settings", values });
+          dirty = false;
+        }, 700);
       }
-      const saveHistory = () => saveList(STORAGE_KEY, history, "history-status");
-      const saveExpenses = () => saveList(EXP_KEY, expenses, "exp-status");
+      function readLocal(key) {
+        try { const d = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(d) ? d.filter(x => x && typeof x === "object" && x.id) : []; }
+        catch (e) { return []; }
+      }
+      async function migrateLocal() {
+        try { if (localStorage.getItem("impresion3d_migrated")) return; } catch (e) { return; }
+        const sh = new Set(history.map(i => i.id)), se = new Set(expenses.map(i => i.id));
+        const nh = readLocal(STORAGE_KEY).filter(i => !sh.has(i.id));
+        const ne = readLocal(EXP_KEY).filter(i => !se.has(i.id));
+        let done = true;
+        if (nh.length || ne.length) {
+          if (confirm(`Este navegador tiene ${nh.length} pedidos y ${ne.length} compras guardados solo aquí. ¿Subirlos al servidor para que todos los vean?`)) {
+            done = await send({ op: "import", history: nh, expenses: ne });
+          }
+        }
+        if (done) { try { localStorage.setItem("impresion3d_migrated", "1"); } catch (e) {} }
+      }
 
       function showTab(name) {
         document.body.dataset.tab = name;
@@ -595,7 +654,7 @@
         $("lbl-matprofit").textContent = `Sobre el material (${v.matMarginRate}% de ${money(v.material)})`;
         $("lbl-profit").textContent = `Sobre el resto (${v.marginRate}% de ${money(v.cost - v.material)})`;
       }
-      form.addEventListener("input", updateCalc);
+      form.addEventListener("input", (e) => { updateCalc(); if (SHARED.includes(e.target.id)) queueSettings(); });
       form.addEventListener("change", updateCalc);
       $("mb-details").addEventListener("click", () => $("summary").scrollIntoView({ behavior: "smooth", block: "start" }));
 
@@ -657,7 +716,7 @@
         $("form-status").textContent = "Pedido cargado. Puedes editarlo y guardarlo como nuevo.";
       }
 
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const piece = $("piece").value.trim();
         if (!piece) { $("piece").focus(); $("form-status").textContent = "Escribe el nombre de la pieza."; return; }
@@ -669,19 +728,17 @@
           kgCost: v.avgKg, sold: false,
           id: uid(), createdAt: new Date().toISOString()
         };
-        history.push(record);
-        if (saveHistory()) {
-          renderHistory();
-          $("form-status").textContent = "Cotización guardada. Cuando te paguen, márcala como vendida en “Pedidos y ventas”.";
-        }
+        const ok = await send({ op: "put", collection: "history", item: record });
+        $("form-status").textContent = ok ? "Cotización guardada. Ya la ven todos en “Pedidos y ventas”." : OFFLINE;
       });
       $("reset-btn").addEventListener("click", () => {
         form.reset();
+        lastStamp = null; applySettings();
         setFilaments([{}]);
         $("form-status").textContent = "";
         updateCalc();
       });
-      $("history-container").addEventListener("click", (e) => {
+      $("history-container").addEventListener("click", async (e) => {
         const l = e.target.closest("[data-load]"), d = e.target.closest("[data-delete]");
         const s = e.target.closest("[data-sell]"), u = e.target.closest("[data-unsell]");
         if (l) { const it = history.find(r => r.id === l.dataset.load); if (it) loadIntoForm(it); }
@@ -692,19 +749,22 @@
           if (ans === null) return;
           const amount = Number(String(ans).replace(/[$,\s]/g, ""));
           if (!Number.isFinite(amount) || amount < 0) { $("history-status").textContent = "Escribe un monto válido."; return; }
-          it.sold = true; it.soldPrice = amount; it.soldAt = new Date().toISOString();
-          if (saveHistory()) { renderHistory(); $("history-status").textContent = "Venta registrada. Ya cuenta en el dashboard."; }
+          const ok = await send({ op: "put", collection: "history", item: { ...it, sold: true, soldPrice: amount, soldAt: new Date().toISOString() } });
+          $("history-status").textContent = ok ? "Venta registrada. Ya cuenta en el dashboard." : OFFLINE;
         }
         if (u) {
           const it = history.find(r => r.id === u.dataset.unsell);
-          if (it) { it.sold = false; delete it.soldPrice; delete it.soldAt; saveHistory(); renderHistory(); $("history-status").textContent = "Venta deshecha."; }
+          if (it) {
+            const { soldPrice, soldAt, ...rest } = it;
+            const ok = await send({ op: "put", collection: "history", item: { ...rest, sold: false } });
+            $("history-status").textContent = ok ? "Venta deshecha." : OFFLINE;
+          }
         }
         if (d) {
           const it = history.find(r => r.id === d.dataset.delete);
           if (it && confirm(`¿Eliminar el pedido “${it.piece}”?`)) {
-            history = history.filter(r => r.id !== it.id);
-            saveHistory(); renderHistory();
-            $("history-status").textContent = "Pedido eliminado.";
+            const ok = await send({ op: "delete", collection: "history", id: it.id });
+            $("history-status").textContent = ok ? "Pedido eliminado." : OFFLINE;
           }
         }
       });
@@ -715,11 +775,11 @@
         $("filters").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
         renderHistory();
       });
-      $("clear-btn").addEventListener("click", () => {
+      $("clear-btn").addEventListener("click", async () => {
         if (!history.length) { $("history-status").textContent = "No hay pedidos que borrar."; return; }
-        if (confirm("¿Borrar TODOS los pedidos y ventas de este navegador? No se puede deshacer. Descarga un respaldo antes si lo quieres conservar. (Tus compras e inversión no se borran.)")) {
-          history = []; saveHistory(); renderHistory();
-          $("history-status").textContent = "Pedidos borrados.";
+        if (confirm("¿Borrar TODOS los pedidos y ventas del servidor? Lo perderán los 3 y no se puede deshacer. Descarga un respaldo antes. (Tus compras e inversión no se borran.)")) {
+          const ok = await send({ op: "clear", collection: "history" });
+          $("history-status").textContent = ok ? "Pedidos borrados." : OFFLINE;
         }
       });
 
@@ -800,25 +860,24 @@
             <div class="e-right"><span class="e-cost">${money(nn(e.cost))}</span><button class="btn-danger btn-sm" type="button" data-del-exp="${esc(e.id)}" aria-label="Eliminar compra">×</button></div>
           </div>`).join("") : '<div class="empty" style="padding:14px">Sin compras registradas.</div>';
       }
-      $("exp-form").addEventListener("submit", (e) => {
+      $("exp-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const concept = $("e-name").value.trim();
         const cost = nn($("e-cost").value);
         if (!concept || cost <= 0) { $("exp-status").textContent = "Escribe el concepto y el costo."; $("exp-status").style.color = "var(--red)"; return; }
         $("exp-status").style.color = "";
-        expenses.push({ id: uid(), concept, category: $("e-cat").value, cost, grams: nn($("e-grams").value),
-          date: $("e-date").value || new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString() });
-        if (saveExpenses()) {
+        const item = { id: uid(), concept, category: $("e-cat").value, cost, grams: nn($("e-grams").value),
+          date: $("e-date").value || new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString() };
+        if (await send({ op: "put", collection: "expenses", item })) {
           $("e-name").value = ""; $("e-cost").value = ""; $("e-grams").value = "";
           $("exp-status").textContent = "Compra agregada.";
-          renderDashboard();
-        }
+        } else { $("exp-status").textContent = OFFLINE; $("exp-status").style.color = "var(--red)"; }
       });
-      $("exp-list").addEventListener("click", (e) => {
+      $("exp-list").addEventListener("click", async (e) => {
         const b = e.target.closest("[data-del-exp]");
         if (!b) return;
         const it = expenses.find(x => x.id === b.dataset.delExp);
-        if (it && confirm(`¿Eliminar la compra “${it.concept}”?`)) { expenses = expenses.filter(x => x.id !== it.id); saveExpenses(); renderDashboard(); }
+        if (it && confirm(`¿Eliminar la compra “${it.concept}”?`)) { await send({ op: "delete", collection: "expenses", id: it.id }); }
       });
 
       function download(name, content, mime) {
@@ -859,20 +918,22 @@
           const ve = exps.filter(i => i && typeof i === "object" && i.concept && i.id);
           if (!confirm(`Se encontraron ${vh.length} pedidos y ${ve.length} compras válidos. ¿Añadirlos?`)) return;
           const hid = new Set(history.map(i => i.id)), eid = new Set(expenses.map(i => i.id));
-          let a1 = 0, a2 = 0;
-          vh.forEach(i => { if (!hid.has(i.id)) { history.push(i); hid.add(i.id); a1++; } });
-          ve.forEach(i => { if (!eid.has(i.id)) { expenses.push(i); eid.add(i.id); a2++; } });
-          if (saveHistory() & saveExpenses()) { renderHistory(); renderDashboard(); $("history-status").textContent = `Importación lista: ${a1} pedidos y ${a2} compras añadidos; duplicados omitidos.`; }
+          const a1 = vh.filter(i => !hid.has(i.id)).length, a2 = ve.filter(i => !eid.has(i.id)).length;
+          const ok = await send({ op: "import", history: vh, expenses: ve });
+          $("history-status").textContent = ok ? `Importación lista: ${a1} pedidos y ${a2} compras añadidos; duplicados omitidos.` : OFFLINE;
         } catch (err) {
           $("history-status").textContent = "No se pudo importar. Elige un respaldo JSON válido de esta calculadora.";
         } finally { e.target.value = ""; }
       });
       $("print-btn").addEventListener("click", () => window.print());
 
-      $("e-date").value = new Date().toISOString().slice(0, 10);
-      setFilaments([{}]);
-      renderHistory();
-      renderDashboard();
+      (async () => {
+        $("e-date").value = new Date().toISOString().slice(0, 10);
+        setFilaments([{}]);
+        renderHistory(); renderDashboard();
+        try { applyState(await api("state")); setSync(true); await migrateLocal(); }
+        catch (e) { setSync(false); }
+      })();
     })();
   </script>
 </body>
